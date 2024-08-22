@@ -1,16 +1,38 @@
 import CustomButton from "@/components/CustomButton";
 import FormField from "@/components/FormField";
 import { images } from "@/constants";
-import { Link } from "expo-router";
+import { useGlobalContext } from "@/context/GlobalProvider";
+import { createUser } from "@/lib/appwrite";
+import { Link, router } from "expo-router";
 import React, { useState } from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Alert, Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SignUp = () => {
   const [form, setForm] = useState({ userName: "", email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setUser, setIsLoggedIn } = useGlobalContext();
 
-  const submit = () => {};
+  const submit = async () => {
+    if (!form.userName || !form.email || !form.password) {
+      Alert.alert("Error", "Please fill in all the fields");
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await createUser(form.email, form.password, form.userName);
+      if (result) {
+        setUser?.(result);
+        setIsLoggedIn?.(true);
+      }
+      router.replace("/home");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -22,12 +44,12 @@ const SignUp = () => {
             className="w-[115px] h-[35px]"
           />
           <Text className="text-2xl text-white mt-10 font-psemibold">
-            Log in to Aora
+            Sign up to Aora
           </Text>
           <FormField
             title="Username"
             value={form.userName}
-            handleChangeText={(e) => setForm({ ...form, email: e })}
+            handleChangeText={(e) => setForm({ ...form, userName: e })}
             otherStyles="mt-7"
           />
           <FormField
